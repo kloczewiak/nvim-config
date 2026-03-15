@@ -1,14 +1,19 @@
 -- Keymaps applied when an LSP attaches to a buffer
 local function on_attach_keymaps(event)
-	local map = function(keys, func, desc, mode)
+	local map = function(keys, func, desc, mode, opts)
 		mode = mode or "n"
-		vim.keymap.set(mode, keys, func, { buffer = event.buf, desc = "LSP: " .. desc })
+		vim.keymap.set(
+			mode,
+			keys,
+			func,
+			vim.tbl_extend("force", { buffer = event.buf, desc = "LSP: " .. desc }, opts or {})
+		)
 	end
 
 	local tb = require("telescope.builtin")
 
 	map("gd", tb.lsp_definitions, "[G]oto [D]efinition")
-	map("gr", tb.lsp_references, "[G]oto [R]eferences")
+	map("gr", tb.lsp_references, "[G]oto [R]eferences", "n", { nowait = true })
 	map("gI", tb.lsp_implementations, "[G]oto [I]mplementation")
 	map("gD", vim.lsp.buf.declaration, "[G]oto [D]eclaration")
 	map("<leader>D", tb.lsp_type_definitions, "Type [D]efinition")
