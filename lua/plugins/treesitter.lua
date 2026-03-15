@@ -1,9 +1,10 @@
 return {
 	"nvim-treesitter/nvim-treesitter",
+	lazy = false,
 	build = ":TSUpdate",
-	opts = {
-		-- Added Next.js/React specific parsers
-		ensure_installed = {
+	branch = "main",
+	config = function()
+		local parsers = {
 			"bash",
 			"c",
 			"diff",
@@ -21,20 +22,22 @@ return {
 			"css",
 			"json",
 			"yaml",
-		},
+		}
+		require("nvim-treesitter").install(parsers)
 
-		-- Autoinstall languages that are not installed
-		auto_install = true,
-
-		highlight = {
-			enable = true,
-			-- Some languages depend on vim's regex highlighting system for indent rules.
-			additional_vim_regex_highlighting = { "ruby" },
-		},
-
-		indent = {
-			enable = true,
-			disable = { "ruby" },
-		},
-	},
+		vim.api.nvim_create_autocmd("FileType", {
+			callback = function(args)
+				local buf, filetype = args.buf, args.match
+				local language = vim.treesitter.language.get_lang(filetype)
+				if not language then
+					return
+				end
+				if not vim.treesitter.language.add(language) then
+					return
+				end
+				vim.treesitter.start(buf, language)
+				vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+			end,
+		})
+	end,
 }
